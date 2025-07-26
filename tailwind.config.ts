@@ -68,6 +68,19 @@ export default {
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
 			},
+			backgroundImage: {
+				'gradient-spiritual': 'var(--gradient-spiritual)',
+				'gradient-sacred': 'var(--gradient-sacred)',
+				'gradient-divine': 'var(--gradient-divine)'
+			},
+			boxShadow: {
+				'divine': 'var(--shadow-divine)',
+				'peaceful': 'var(--shadow-peaceful)'
+			},
+			fontFamily: {
+				sanskrit: ['Noto Sans Devanagari', 'serif'],
+				mantra: ['Crimson Text', 'serif']
+			},
 			keyframes: {
 				'accordion-down': {
 					from: {
