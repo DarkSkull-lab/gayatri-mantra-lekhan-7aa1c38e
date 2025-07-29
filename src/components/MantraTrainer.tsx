@@ -242,7 +242,7 @@ export default function MantraTrainer() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl md:text-6xl font-bold bg-gradient-sacred bg-clip-text text-transparent font-mantra">
-            Mantra Harmony Trainer
+            Gayatri Mantra Lekhan
           </h1>
           <p className="text-lg text-muted-foreground mt-2">
             Practice the sacred Gayatri Mantra with devotion
