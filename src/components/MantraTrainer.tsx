@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 
 // Mantra texts
 const MANTRAS = {
-  hindi: "ॐ भूर्भुवः स्वः तत्सवितुर्वरेण्यम्। भर्गो देवस्य धीमहि। धियो यो नः प्रचोदयात्॥",
+  hindi: "ॐ भूर्भुवः स्वः तत्सवितुर्वरेण्यम् भर्गो देवस्य धीमहि धियो यो नः प्रचोदयात्",
   hinglish: "Om bhur bhuvah swah tat savitur varenyam bhargo devasya dheemahi dhiyo yo nah prachodayat"
 };
 
