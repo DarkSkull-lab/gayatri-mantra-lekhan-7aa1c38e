@@ -40,6 +40,11 @@ const getTypingSuggestion = (input: string, target: string): string => {
   const targetWords = target.split(' ');
   const inputWords = input.trim().split(' ');
   
+  // If no input, suggest the first word
+  if (!input.trim()) {
+    return targetWords[0];
+  }
+  
   if (inputWords.length <= targetWords.length) {
     const currentWordIndex = inputWords.length - 1;
     const currentWord = inputWords[currentWordIndex] || '';
@@ -119,6 +124,15 @@ export default function MantraTrainer() {
     localStorage.setItem('mantra-progress', JSON.stringify(userProgress));
   }, [userProgress]);
 
+  // Initialize suggestion on mount and language change
+  useEffect(() => {
+    if (!currentInput) {
+      const target = MANTRAS[language];
+      const initialSuggestion = getTypingSuggestion('', target);
+      setSuggestion(initialSuggestion);
+    }
+  }, [language, currentInput]);
+
   const handleInputChange = (value: string) => {
     setCurrentInput(value);
     
@@ -193,6 +207,25 @@ export default function MantraTrainer() {
     setCurrentInput('');
     setRepetitionCount(0);
     setIsCompleted(false);
+  };
+
+  const handleSuggestionClick = () => {
+    if (suggestion) {
+      const words = currentInput.trim().split(' ');
+      if (!currentInput.trim()) {
+        // If no input, just use the suggestion
+        setCurrentInput(suggestion + ' ');
+      } else {
+        // Replace the last incomplete word with the suggestion
+        words[words.length - 1] = suggestion;
+        setCurrentInput(words.join(' ') + ' ');
+      }
+      
+      // Update suggestion for next word
+      const target = MANTRAS[language];
+      const newSuggestion = getTypingSuggestion(words.join(' ') + ' ', target);
+      setSuggestion(newSuggestion);
+    }
   };
 
   const progressPercentage = Math.min((userProgress.totalPoints / 1000) * 100, 100);
@@ -299,8 +332,11 @@ export default function MantraTrainer() {
             
             {/* Suggestion Bar */}
             {suggestion && !isCompleted && (
-              <div className="p-3 bg-muted/50 rounded-md border-l-4 border-primary">
-                <p className="text-sm text-muted-foreground mb-1">Suggestion:</p>
+              <div 
+                className="p-3 bg-muted/50 rounded-md border-l-4 border-primary cursor-pointer hover:bg-muted/70 transition-colors"
+                onClick={handleSuggestionClick}
+              >
+                <p className="text-sm text-muted-foreground mb-1">💡 Tap to use suggestion:</p>
                 <p className={`text-accent font-medium ${language === 'hindi' ? 'font-sanskrit' : 'font-mantra'}`}>
                   {suggestion}
                 </p>
