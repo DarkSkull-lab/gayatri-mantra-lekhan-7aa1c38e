@@ -225,6 +225,9 @@ export default function MantraTrainer() {
       const target = MANTRAS[language];
       const newSuggestion = getTypingSuggestion(words.join(' ') + ' ', target);
       setSuggestion(newSuggestion);
+      
+      // Keep focus on textarea
+      textareaRef.current?.focus();
     }
   };
 
@@ -320,16 +323,6 @@ export default function MantraTrainer() {
               </p>
             </div>
             
-            <Textarea
-              ref={textareaRef}
-              value={currentInput}
-              onChange={(e) => handleInputChange(e.target.value)}
-              onPaste={handlePaste}
-              placeholder={`Type the ${language} mantra here...`}
-              className={`min-h-32 text-lg resize-none ${language === 'hindi' ? 'font-sanskrit' : 'font-mantra'} ${isCompleted ? 'bg-accent/20' : ''}`}
-              disabled={isCompleted}
-            />
-            
             {/* Suggestion Bar */}
             {suggestion && !isCompleted && (
               <div 
@@ -342,6 +335,16 @@ export default function MantraTrainer() {
                 </p>
               </div>
             )}
+            
+            <Textarea
+              ref={textareaRef}
+              value={currentInput}
+              onChange={(e) => handleInputChange(e.target.value)}
+              onPaste={handlePaste}
+              placeholder={`Type the ${language} mantra here...`}
+              className={`min-h-32 text-lg resize-none ${language === 'hindi' ? 'font-sanskrit' : 'font-mantra'} ${isCompleted ? 'bg-accent/20' : ''}`}
+              disabled={isCompleted}
+            />
             
             {isCompleted && (
               <div className="text-center text-accent font-semibold">
