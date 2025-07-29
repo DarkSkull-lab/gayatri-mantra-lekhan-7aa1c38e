@@ -32,34 +32,53 @@ const autoCorrect = (input: string, target: string, language: string): string =>
     corrected = corrected.replace(/\b(aum|AUM)\b/g, 'Om');
   }
   
-  // Simple character-level corrections for common typos
+  return corrected;
+};
+
+// Get typing suggestions
+const getTypingSuggestion = (input: string, target: string): string => {
   const targetWords = target.split(' ');
-  const inputWords = corrected.split(' ');
+  const inputWords = input.trim().split(' ');
   
-  for (let i = 0; i < Math.min(targetWords.length, inputWords.length); i++) {
-    const targetWord = targetWords[i];
-    const inputWord = inputWords[i];
+  if (inputWords.length <= targetWords.length) {
+    const currentWordIndex = inputWords.length - 1;
+    const currentWord = inputWords[currentWordIndex] || '';
+    const targetWord = targetWords[currentWordIndex] || '';
     
-    if (inputWord.length >= 2 && targetWord.length >= 2) {
-      // If first 2 characters match, accept the word
-      if (inputWord.substring(0, 2) === targetWord.substring(0, 2)) {
-        inputWords[i] = targetWord;
-      }
+    if (targetWord.startsWith(currentWord) && currentWord.length > 0) {
+      return targetWord;
     }
   }
   
-  return inputWords.join(' ');
+  return '';
 };
 
-// Check if typing matches target (allowing for auto-corrections)
+// Check if typing matches target (allowing for auto-corrections and minor mistakes)
 const checkAccuracy = (input: string, target: string, language: string): number => {
   const corrected = autoCorrect(input, target, language);
   const targetNormalized = target.replace(/[।॥]/g, '').toLowerCase().trim();
   const inputNormalized = corrected.replace(/[।॥]/g, '').toLowerCase().trim();
   
+  // Exact match
   if (inputNormalized === targetNormalized) return 100;
   
-  // Calculate partial accuracy
+  // Allow minor mistakes - check if 90% of characters match
+  const targetChars = targetNormalized.replace(/\s/g, '');
+  const inputChars = inputNormalized.replace(/\s/g, '');
+  
+  if (inputChars.length >= targetChars.length * 0.8) {
+    let matches = 0;
+    const minLength = Math.min(targetChars.length, inputChars.length);
+    
+    for (let i = 0; i < minLength; i++) {
+      if (targetChars[i] === inputChars[i]) matches++;
+    }
+    
+    const similarity = (matches / targetChars.length) * 100;
+    if (similarity >= 85) return 100; // Accept if 85% similar
+  }
+  
+  // Calculate partial accuracy for incomplete typing
   const words = targetNormalized.split(' ');
   const inputWords = inputNormalized.split(' ');
   let correct = 0;
@@ -83,6 +102,7 @@ export default function MantraTrainer() {
   const [repetitionCount, setRepetitionCount] = useState(0);
   const [userProgress, setUserProgress] = useState<UserProgress>({ totalPoints: 0, achievements: [], completedSessions: 0 });
   const [isCompleted, setIsCompleted] = useState(false);
+  const [suggestion, setSuggestion] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
 
@@ -105,10 +125,15 @@ export default function MantraTrainer() {
     const target = MANTRAS[language];
     const accuracy = checkAccuracy(value, target, language);
     
+    // Update suggestion
+    const currentSuggestion = getTypingSuggestion(value, target);
+    setSuggestion(currentSuggestion);
+    
     if (accuracy === 100) {
       // Completed one repetition
       const newCount = repetitionCount + 1;
       setRepetitionCount(newCount);
+      setSuggestion(''); // Clear suggestion on completion
       
       if (newCount === 3) {
         // Completed 3 repetitions - award points
@@ -143,10 +168,14 @@ export default function MantraTrainer() {
           setCurrentInput('');
           setRepetitionCount(0);
           setIsCompleted(false);
+          setSuggestion('');
         }, 3000);
       } else {
         // Clear for next repetition
-        setTimeout(() => setCurrentInput(''), 1000);
+        setTimeout(() => {
+          setCurrentInput('');
+          setSuggestion('');
+        }, 1000);
       }
     }
   };
@@ -207,7 +236,13 @@ export default function MantraTrainer() {
             <h3 className="text-xl font-semibold">Journey to 1,000 Points</h3>
             <p className="text-sm text-muted-foreground">Current: {userProgress.totalPoints} points</p>
           </div>
-          <Progress value={progressPercentage} className="h-3 mb-4" />
+          <Progress 
+            value={progressPercentage} 
+            className="h-4 mb-4 transition-all duration-1000 ease-out" 
+          />
+          <div className="text-xs text-muted-foreground text-center">
+            {progressPercentage.toFixed(1)}% complete
+          </div>
           
           {/* Achievements */}
           <div className="flex flex-wrap gap-2 justify-center">
@@ -261,6 +296,16 @@ export default function MantraTrainer() {
               className={`min-h-32 text-lg resize-none ${language === 'hindi' ? 'font-sanskrit' : 'font-mantra'} ${isCompleted ? 'bg-accent/20' : ''}`}
               disabled={isCompleted}
             />
+            
+            {/* Suggestion Bar */}
+            {suggestion && !isCompleted && (
+              <div className="p-3 bg-muted/50 rounded-md border-l-4 border-primary">
+                <p className="text-sm text-muted-foreground mb-1">Suggestion:</p>
+                <p className={`text-accent font-medium ${language === 'hindi' ? 'font-sanskrit' : 'font-mantra'}`}>
+                  {suggestion}
+                </p>
+              </div>
+            )}
             
             {isCompleted && (
               <div className="text-center text-accent font-semibold">
