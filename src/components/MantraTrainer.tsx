@@ -268,9 +268,11 @@ export default function MantraTrainer() {
         
         {/* Creator Info */}
         <div className="fixed top-6 right-6 z-50">
-          <p className="text-sm bg-gradient-sacred bg-clip-text text-transparent font-mantra">
-            Creator - Kunj Thakur | DOB - 21/05/2012 | Made in - 2025
-          </p>
+          <div className="text-sm bg-gradient-sacred bg-clip-text text-transparent font-mantra text-right">
+            <div>Creator - Kunj Thakur</div>
+            <div>DOB - 21/05/2012</div>
+            <div>Made in - 2025</div>
+          </div>
         </div>
 
 
