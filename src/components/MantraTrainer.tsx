@@ -256,6 +256,14 @@ export default function MantraTrainer() {
       />
       
       <div className="relative z-10 container mx-auto px-4 py-8">
+        {/* About Me Section */}
+        <div className="absolute top-4 right-4 bg-card/90 backdrop-blur-sm p-3 rounded-lg shadow-peaceful text-sm">
+          <div className="text-xs text-muted-foreground mb-1">About Me</div>
+          <div className="text-primary font-medium">Kunj Thakur</div>
+          <div className="text-xs text-muted-foreground">Born: 21/05/2012</div>
+          <div className="text-xs text-muted-foreground">Made in 2025</div>
+        </div>
+
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl md:text-6xl font-bold bg-gradient-sacred bg-clip-text text-transparent font-mantra">
