@@ -137,11 +137,15 @@ export default function MantraTrainer() {
     setCurrentInput(value);
     
     const target = MANTRAS[language];
-    const accuracy = checkAccuracy(value, target, language);
     
     // Update suggestion
     const currentSuggestion = getTypingSuggestion(value, target);
     setSuggestion(currentSuggestion);
+  };
+
+  const handleSubmit = () => {
+    const target = MANTRAS[language];
+    const accuracy = checkAccuracy(currentInput, target, language);
     
     if (accuracy === 100) {
       // Completed one repetition
@@ -186,11 +190,21 @@ export default function MantraTrainer() {
         }, 3000);
       } else {
         // Clear for next repetition
+        toast({
+          title: "✅ Repetition Complete!",
+          description: `${newCount}/3 repetitions completed`,
+        });
         setTimeout(() => {
           setCurrentInput('');
           setSuggestion('');
         }, 1000);
       }
+    } else {
+      toast({
+        title: "Please complete the mantra",
+        description: "Type the complete mantra before submitting",
+        variant: "destructive"
+      });
     }
   };
 
@@ -345,6 +359,19 @@ export default function MantraTrainer() {
               className={`min-h-32 text-lg resize-none ${language === 'hindi' ? 'font-sanskrit' : 'font-mantra'} ${isCompleted ? 'bg-accent/20' : ''}`}
               disabled={isCompleted}
             />
+            
+            {/* Submit Button */}
+            {!isCompleted && (
+              <div className="flex justify-center">
+                <Button 
+                  onClick={handleSubmit}
+                  disabled={!currentInput.trim()}
+                  className="bg-gradient-spiritual hover:opacity-90"
+                >
+                  Submit Mantra
+                </Button>
+              </div>
+            )}
             
             {isCompleted && (
               <div className="text-center text-accent font-semibold">
