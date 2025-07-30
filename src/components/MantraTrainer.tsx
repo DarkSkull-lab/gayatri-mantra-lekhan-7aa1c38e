@@ -265,6 +265,13 @@ export default function MantraTrainer() {
             className="h-12 w-12 object-contain rounded-lg shadow-lg"
           />
         </div>
+        
+        {/* Creator Info */}
+        <div className="fixed top-6 right-6 z-50 text-right">
+          <p className="text-sm bg-gradient-sacred bg-clip-text text-transparent font-mantra">
+            Creator - Kunj Thakur | DOB - 21/05/2012 | Made in - 2025
+          </p>
+        </div>
 
 
         {/* Header */}
