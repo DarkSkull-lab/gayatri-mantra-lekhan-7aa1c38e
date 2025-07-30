@@ -266,24 +266,6 @@ export default function MantraTrainer() {
           />
         </div>
 
-        {/* About Me Section */}
-        <div className="fixed top-6 right-6 z-50 bg-gradient-to-br from-primary/10 to-accent/10 backdrop-blur-xl p-4 rounded-2xl shadow-2xl border border-primary/20">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-2 h-2 bg-gradient-to-r from-primary to-accent rounded-full animate-pulse"></div>
-            <div className="text-xs font-bold text-primary uppercase tracking-widest">Creator</div>
-          </div>
-          <div className="text-foreground font-bold text-lg mb-2 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-            Kunj Thakur
-          </div>
-          <div className="text-xs text-muted-foreground mb-2 flex items-center gap-2">
-            <span className="text-accent">🎂</span>
-            <span>Born: 21/05/2012</span>
-          </div>
-          <div className="text-xs text-accent font-semibold flex items-center gap-2">
-            <span>✨</span>
-            <span>Made in 2025</span>
-          </div>
-        </div>
 
         {/* Header */}
         <div className="text-center mb-8">
