@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Trophy, Award, Star, Languages, Volume2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import logoImage from '@/assets/logo.png';
 
 // Mantra texts
 const MANTRAS = {
@@ -256,12 +257,30 @@ export default function MantraTrainer() {
       />
       
       <div className="relative z-10 container mx-auto px-4 py-8">
+        {/* Logo Section */}
+        <div className="absolute top-4 left-4">
+          <img 
+            src={logoImage} 
+            alt="Gayatri Mantra Lekhan Logo" 
+            className="h-12 w-12 object-contain rounded-lg shadow-lg"
+          />
+        </div>
+
         {/* About Me Section */}
-        <div className="absolute top-4 right-4 bg-card/90 backdrop-blur-sm p-3 rounded-lg shadow-peaceful text-sm">
-          <div className="text-xs text-muted-foreground mb-1">About Me</div>
-          <div className="text-primary font-medium">Kunj Thakur</div>
-          <div className="text-xs text-muted-foreground">Born: 21/05/2012</div>
-          <div className="text-xs text-muted-foreground">Made in 2025</div>
+        <div className="absolute top-4 right-4 bg-gradient-to-br from-card/95 to-card/85 backdrop-blur-md p-4 rounded-xl shadow-elegant border border-border/50">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+            <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Creator</div>
+          </div>
+          <div className="text-primary font-semibold text-base mb-1">Kunj Thakur</div>
+          <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+            <span>🎂</span>
+            <span>Born: 21/05/2012</span>
+          </div>
+          <div className="text-xs text-accent font-medium flex items-center gap-1">
+            <span>✨</span>
+            <span>Made in 2025</span>
+          </div>
         </div>
 
         {/* Header */}
