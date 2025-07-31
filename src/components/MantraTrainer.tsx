@@ -5,11 +5,8 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Trophy, Award, Star, Languages, Volume2, LogOut } from 'lucide-react';
+import { Trophy, Award, Star, Languages, Volume2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/supabase';
-import Auth from './Auth';
-import Leaderboard from './Leaderboard';
 import logoImage from '@/assets/logo.png';
 
 // Mantra texts
@@ -112,94 +109,21 @@ export default function MantraTrainer() {
   const [userProgress, setUserProgress] = useState<UserProgress>({ totalPoints: 0, achievements: [], completedSessions: 0 });
   const [isCompleted, setIsCompleted] = useState(false);
   const [suggestion, setSuggestion] = useState('');
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [showLeaderboard, setShowLeaderboard] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
 
-  // Check auth state and load user progress
+  // Load progress from localStorage
   useEffect(() => {
-    checkAuthState();
+    const saved = localStorage.getItem('mantra-progress');
+    if (saved) {
+      setUserProgress(JSON.parse(saved));
+    }
   }, []);
 
-  const checkAuthState = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        setUser(session.user);
-        await loadUserProgress(session.user.id);
-      }
-    } catch (error) {
-      console.error('Error checking auth state:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadUserProgress = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('user_progress')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
-
-      if (error && error.code !== 'PGRST116') throw error;
-
-      if (data) {
-        setUserProgress({
-          totalPoints: data.total_points,
-          achievements: data.achievements || [],
-          completedSessions: data.completed_sessions,
-        });
-      } else {
-        // Create initial progress record
-        const username = user?.user_metadata?.username || user?.email?.split('@')[0] || 'Anonymous';
-        await createUserProgress(userId, username);
-      }
-    } catch (error) {
-      console.error('Error loading user progress:', error);
-    }
-  };
-
-  const createUserProgress = async (userId: string, username: string) => {
-    try {
-      const { error } = await supabase
-        .from('user_progress')
-        .insert({
-          user_id: userId,
-          username,
-          total_points: 0,
-          achievements: [],
-          completed_sessions: 0,
-        });
-
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error creating user progress:', error);
-    }
-  };
-
-  const saveUserProgress = async (newProgress: UserProgress) => {
-    if (!user) return;
-
-    try {
-      const { error } = await supabase
-        .from('user_progress')
-        .update({
-          total_points: newProgress.totalPoints,
-          achievements: newProgress.achievements,
-          completed_sessions: newProgress.completedSessions,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error saving user progress:', error);
-    }
-  };
+  // Save progress to localStorage
+  useEffect(() => {
+    localStorage.setItem('mantra-progress', JSON.stringify(userProgress));
+  }, [userProgress]);
 
   // Initialize suggestion on mount and language change
   useEffect(() => {
@@ -220,7 +144,7 @@ export default function MantraTrainer() {
     setSuggestion(currentSuggestion);
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     const target = MANTRAS[language];
     const accuracy = checkAccuracy(currentInput, target, language);
     
@@ -252,7 +176,6 @@ export default function MantraTrainer() {
         
         newProgress.achievements = newAchievements;
         setUserProgress(newProgress);
-        await saveUserProgress(newProgress);
         setIsCompleted(true);
         
         toast({
@@ -301,20 +224,6 @@ export default function MantraTrainer() {
     setIsCompleted(false);
   };
 
-  const handleSignOut = async () => {
-    try {
-      await supabase.auth.signOut();
-      setUser(null);
-      setUserProgress({ totalPoints: 0, achievements: [], completedSessions: 0 });
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
-  };
-
-  const handleAuthSuccess = () => {
-    checkAuthState();
-  };
-
   const handleSuggestionClick = () => {
     if (suggestion) {
       const words = currentInput.trim().split(' ');
@@ -338,18 +247,6 @@ export default function MantraTrainer() {
   };
 
   const progressPercentage = Math.min((userProgress.totalPoints / 1000) * 100, 100);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-divine">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <Auth onAuthSuccess={handleAuthSuccess} />;
-  }
 
   return (
     <div className="min-h-screen bg-gradient-divine relative overflow-hidden">
@@ -380,35 +277,13 @@ export default function MantraTrainer() {
 
 
         {/* Header */}
-        <div className="flex justify-between items-start mb-8">
-          <div className="text-center flex-1">
-            <h1 className="text-4xl md:text-6xl font-bold bg-gradient-sacred bg-clip-text text-transparent font-mantra">
-              Gayatri Mantra Lekhan
-            </h1>
-            <p className="text-lg text-muted-foreground mt-2">
-              Practice the sacred Gayatri Mantra with devotion
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowLeaderboard(true)}
-              className="flex items-center gap-2"
-            >
-              <Trophy className="h-4 w-4" />
-              Leaderboard
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleSignOut}
-              className="flex items-center gap-2"
-            >
-              <LogOut className="h-4 w-4" />
-              Sign Out
-            </Button>
-          </div>
+        <div className="text-center mb-8">
+          <h1 className="text-4xl md:text-6xl font-bold bg-gradient-sacred bg-clip-text text-transparent font-mantra">
+            Gayatri Mantra Lekhan
+          </h1>
+          <p className="text-lg text-muted-foreground mt-2">
+            Practice the sacred Gayatri Mantra with devotion
+          </p>
         </div>
 
         {/* Language Selector */}
@@ -555,10 +430,6 @@ export default function MantraTrainer() {
           </div>
         </Card>
       </div>
-
-      {showLeaderboard && (
-        <Leaderboard onClose={() => setShowLeaderboard(false)} />
-      )}
     </div>
   );
 }
