@@ -129,11 +129,15 @@ export default function MantraTrainer() {
       setUserName(savedName);
     }
     
-    // Show popup for any user without a saved name (unless they previously skipped)
+    // Check if user has seen the new leaderboard feature
+    const hasSeenLeaderboard = localStorage.getItem('mantra-leaderboard-intro');
     const nameSkipped = localStorage.getItem('mantra-name-skipped');
     
-    if (!savedName && !nameSkipped) {
+    // Show popup for users without a name AND who haven't seen the leaderboard intro yet
+    if (!savedName && !nameSkipped && !hasSeenLeaderboard) {
       setShowNamePopup(true);
+      // Mark that they've seen the leaderboard feature
+      localStorage.setItem('mantra-leaderboard-intro', 'true');
     }
     
     // Mark as visited
