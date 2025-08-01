@@ -129,11 +129,10 @@ export default function MantraTrainer() {
       setUserName(savedName);
     }
     
-    // Check if this is first visit and name wasn't skipped
-    const hasVisited = localStorage.getItem('mantra-visited');
+    // Show popup for any user without a saved name (unless they previously skipped)
     const nameSkipped = localStorage.getItem('mantra-name-skipped');
     
-    if (!hasVisited && !nameSkipped && !savedName) {
+    if (!savedName && !nameSkipped) {
       setShowNamePopup(true);
     }
     
