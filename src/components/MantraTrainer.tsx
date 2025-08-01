@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Trophy, Award, Star, Languages, Volume2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import logoImage from '@/assets/logo.png';
+import NamePopup from './NamePopup';
+import Leaderboard from './Leaderboard';
 
 // Mantra texts
 const MANTRAS = {
@@ -109,15 +111,34 @@ export default function MantraTrainer() {
   const [userProgress, setUserProgress] = useState<UserProgress>({ totalPoints: 0, achievements: [], completedSessions: 0 });
   const [isCompleted, setIsCompleted] = useState(false);
   const [suggestion, setSuggestion] = useState('');
+  const [showNamePopup, setShowNamePopup] = useState(false);
+  const [userName, setUserName] = useState<string>('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
 
-  // Load progress from localStorage
+  // Check for first-time visit and load saved data
   useEffect(() => {
     const saved = localStorage.getItem('mantra-progress');
     if (saved) {
       setUserProgress(JSON.parse(saved));
     }
+    
+    // Check if user has a saved name
+    const savedName = localStorage.getItem('mantra-user-name');
+    if (savedName) {
+      setUserName(savedName);
+    }
+    
+    // Check if this is first visit and name wasn't skipped
+    const hasVisited = localStorage.getItem('mantra-visited');
+    const nameSkipped = localStorage.getItem('mantra-name-skipped');
+    
+    if (!hasVisited && !nameSkipped && !savedName) {
+      setShowNamePopup(true);
+    }
+    
+    // Mark as visited
+    localStorage.setItem('mantra-visited', 'true');
   }, []);
 
   // Save progress to localStorage
@@ -244,6 +265,12 @@ export default function MantraTrainer() {
       // Keep focus on textarea
       textareaRef.current?.focus();
     }
+  };
+
+  const handleNameSubmit = (name: string) => {
+    setUserName(name);
+    localStorage.setItem('mantra-user-name', name);
+    setShowNamePopup(false);
   };
 
   const progressPercentage = Math.min((userProgress.totalPoints / 1000) * 100, 100);
@@ -412,6 +439,16 @@ export default function MantraTrainer() {
           </Button>
         </div>
 
+        {/* Leaderboard */}
+        <div className="mt-8">
+          <Leaderboard
+            currentUserName={userName}
+            currentUserPoints={userProgress.totalPoints}
+            currentUserSessions={userProgress.completedSessions}
+            currentUserAchievements={userProgress.achievements}
+          />
+        </div>
+
         {/* Stats */}
         <Card className="mt-8 p-4 bg-card/60 backdrop-blur-sm">
           <div className="text-center grid grid-cols-3 gap-4">
@@ -429,6 +466,13 @@ export default function MantraTrainer() {
             </div>
           </div>
         </Card>
+
+        {/* Name Popup */}
+        <NamePopup
+          isOpen={showNamePopup}
+          onClose={() => setShowNamePopup(false)}
+          onNameSubmit={handleNameSubmit}
+        />
       </div>
     </div>
   );
