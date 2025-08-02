@@ -183,21 +183,39 @@ export default function MantraTrainer() {
   // Save progress to Supabase and localStorage
   useEffect(() => {
     if (isLoggedIn && userName) {
-      // Update Supabase
-      supabase
-        .from('users')
-        .update({
-          total_points: userProgress.totalPoints,
-          completed_sessions: userProgress.completedSessions,
-          achievements: userProgress.achievements,
-          last_active: new Date().toISOString()
-        })
-        .eq('name', userName)
-        .then(({ error }) => {
-          if (error) console.error('Error updating user progress:', error);
-        });
+      const isSupabaseConfigured = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY;
+      
+      if (isSupabaseConfigured) {
+        // Update Supabase
+        supabase
+          .from('users')
+          .update({
+            total_points: userProgress.totalPoints,
+            completed_sessions: userProgress.completedSessions,
+            achievements: userProgress.achievements,
+            last_active: new Date().toISOString()
+          })
+          .eq('name', userName)
+          .then(({ error }) => {
+            if (error) console.error('Error updating user progress:', error);
+          });
+      } else {
+        // Update localStorage
+        const localUsers = JSON.parse(localStorage.getItem('local-users') || '[]');
+        const userIndex = localUsers.findIndex((u: any) => u.name === userName);
+        
+        if (userIndex >= 0) {
+          localUsers[userIndex] = {
+            ...localUsers[userIndex],
+            totalPoints: userProgress.totalPoints,
+            completedSessions: userProgress.completedSessions,
+            achievements: userProgress.achievements
+          };
+          localStorage.setItem('local-users', JSON.stringify(localUsers));
+        }
+      }
 
-      // Update localStorage
+      // Always update localStorage for backup
       const userData = {
         name: userName,
         totalPoints: userProgress.totalPoints,

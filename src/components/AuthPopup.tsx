@@ -50,81 +50,152 @@ export default function AuthPopup({ isOpen, onClose, onAuthSuccess }: AuthPopupP
     setLoading(true);
 
     try {
-      if (isLogin) {
-        // Login existing user
-        const { data, error } = await supabase
-          .from('users')
-          .select('*')
-          .eq('name', name.trim())
-          .eq('password', password)
-          .single();
+      // Check if Supabase is available by testing environment variables
+      const isSupabaseConfigured = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY;
+      
+      if (isSupabaseConfigured) {
+        // Use Supabase
+        if (isLogin) {
+          // Login existing user
+          const { data, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('name', name.trim())
+            .eq('password', password)
+            .single();
 
-        if (error || !data) {
-          toast({
-            title: "Login failed",
-            description: "Invalid name or password",
-            variant: "destructive"
+          if (error || !data) {
+            toast({
+              title: "Login failed",
+              description: "Invalid name or password",
+              variant: "destructive"
+            });
+            return;
+          }
+
+          // Update last active
+          await supabase
+            .from('users')
+            .update({ last_active: new Date().toISOString() })
+            .eq('id', data.id);
+
+          onAuthSuccess({
+            name: data.name,
+            totalPoints: data.total_points,
+            completedSessions: data.completed_sessions,
+            achievements: data.achievements || []
           });
-          return;
-        }
 
-        // Update last active
-        await supabase
-          .from('users')
-          .update({ last_active: new Date().toISOString() })
-          .eq('id', data.id);
+          toast({
+            title: "Welcome back!",
+            description: `Logged in as ${data.name}`,
+          });
+        } else {
+          // Register new user
+          const { error } = await supabase
+            .from('users')
+            .insert([{
+              name: name.trim(),
+              password: password,
+              total_points: 0,
+              completed_sessions: 0,
+              achievements: []
+            }]);
 
-        onAuthSuccess({
-          name: data.name,
-          totalPoints: data.total_points,
-          completedSessions: data.completed_sessions,
-          achievements: data.achievements || []
-        });
+          if (error) {
+            if (error.code === '23505') {
+              toast({
+                title: "Name already taken",
+                description: "Please choose a different name",
+                variant: "destructive"
+              });
+            } else {
+              toast({
+                title: "Registration failed",
+                description: "Please try again",
+                variant: "destructive"
+              });
+            }
+            return;
+          }
 
-        toast({
-          title: "Welcome back!",
-          description: `Logged in as ${data.name}`,
-        });
-      } else {
-        // Register new user
-        const { error } = await supabase
-          .from('users')
-          .insert([{
+          onAuthSuccess({
             name: name.trim(),
-            password: password,
-            total_points: 0,
-            completed_sessions: 0,
+            totalPoints: 0,
+            completedSessions: 0,
             achievements: []
-          }]);
+          });
 
-        if (error) {
-          if (error.code === '23505') {
+          toast({
+            title: "Welcome!",
+            description: `Account created for ${name.trim()}`,
+          });
+        }
+      } else {
+        // Fallback to localStorage
+        const localUsers = JSON.parse(localStorage.getItem('local-users') || '[]');
+        
+        if (isLogin) {
+          // Find user in local storage
+          const user = localUsers.find((u: any) => u.name === name.trim() && u.password === password);
+          
+          if (!user) {
+            toast({
+              title: "Login failed",
+              description: "Invalid name or password",
+              variant: "destructive"
+            });
+            return;
+          }
+
+          onAuthSuccess({
+            name: user.name,
+            totalPoints: user.totalPoints || 0,
+            completedSessions: user.completedSessions || 0,
+            achievements: user.achievements || []
+          });
+
+          toast({
+            title: "Welcome back!",
+            description: `Logged in as ${user.name}`,
+          });
+        } else {
+          // Check if name already exists
+          const existingUser = localUsers.find((u: any) => u.name === name.trim());
+          
+          if (existingUser) {
             toast({
               title: "Name already taken",
               description: "Please choose a different name",
               variant: "destructive"
             });
-          } else {
-            toast({
-              title: "Registration failed",
-              description: "Please try again",
-              variant: "destructive"
-            });
+            return;
           }
-          return;
+
+          // Create new user
+          const newUser = {
+            name: name.trim(),
+            password: password,
+            totalPoints: 0,
+            completedSessions: 0,
+            achievements: []
+          };
+          
+          localUsers.push(newUser);
+          localStorage.setItem('local-users', JSON.stringify(localUsers));
+
+          onAuthSuccess({
+            name: name.trim(),
+            totalPoints: 0,
+            completedSessions: 0,
+            achievements: []
+          });
+
+          toast({
+            title: "Welcome!",
+            description: `Account created for ${name.trim()} (Local storage)`,
+          });
         }
-
-        onAuthSuccess({
-          name: name.trim(),
-          totalPoints: 0,
-          completedSessions: 0,
-          achievements: []
-        });
-
-        toast({
-          title: "Welcome!",
-          description: `Account created for ${name.trim()}`,
-        });
       }
 
       onClose();

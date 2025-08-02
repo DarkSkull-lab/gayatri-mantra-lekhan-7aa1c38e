@@ -31,27 +31,48 @@ export default function Leaderboard({
 
   const updateLeaderboard = async () => {
     try {
-      // Fetch from Supabase
-      const { data, error } = await supabase
-        .from('users')
-        .select('name, total_points, completed_sessions, achievements, last_active')
-        .order('total_points', { ascending: false })
-        .order('completed_sessions', { ascending: false });
+      const isSupabaseConfigured = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY;
+      
+      if (isSupabaseConfigured) {
+        // Fetch from Supabase
+        const { data, error } = await supabase
+          .from('users')
+          .select('name, total_points, completed_sessions, achievements, last_active')
+          .order('total_points', { ascending: false })
+          .order('completed_sessions', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching leaderboard:', error);
-        return;
+        if (error) {
+          console.error('Error fetching leaderboard:', error);
+          return;
+        }
+
+        const leaderboardData: LeaderboardEntry[] = (data || []).map(user => ({
+          name: user.name,
+          points: user.total_points,
+          sessions: user.completed_sessions,
+          achievements: user.achievements || [],
+          lastActive: user.last_active
+        }));
+
+        setLeaderboard(leaderboardData);
+      } else {
+        // Fallback to localStorage
+        const localUsers = JSON.parse(localStorage.getItem('local-users') || '[]');
+        const leaderboardData: LeaderboardEntry[] = localUsers
+          .map((user: any) => ({
+            name: user.name,
+            points: user.totalPoints || 0,
+            sessions: user.completedSessions || 0,
+            achievements: user.achievements || [],
+            lastActive: new Date().toISOString()
+          }))
+          .sort((a: LeaderboardEntry, b: LeaderboardEntry) => {
+            if (b.points !== a.points) return b.points - a.points;
+            return b.sessions - a.sessions;
+          });
+
+        setLeaderboard(leaderboardData);
       }
-
-      const leaderboardData: LeaderboardEntry[] = (data || []).map(user => ({
-        name: user.name,
-        points: user.total_points,
-        sessions: user.completed_sessions,
-        achievements: user.achievements || [],
-        lastActive: user.last_active
-      }));
-
-      setLeaderboard(leaderboardData);
     } catch (error) {
       console.error('Error updating leaderboard:', error);
     }
