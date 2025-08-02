@@ -123,7 +123,9 @@ export default function MantraTrainer() {
   useEffect(() => {
     const checkAuthStatus = () => {
       const savedUser = localStorage.getItem('mantra-user');
+      
       if (savedUser) {
+        // New system user
         const userData = JSON.parse(savedUser);
         setUserName(userData.name);
         setIsLoggedIn(true);
@@ -133,14 +135,44 @@ export default function MantraTrainer() {
           completedSessions: userData.completedSessions || 0
         });
       } else {
-        // Check if user has skipped auth before
-        const authSkipped = localStorage.getItem('mantra-auth-skipped');
-        const hasSeenAuth = localStorage.getItem('mantra-auth-intro');
+        // Check for old system users and migrate them
+        const oldUserName = localStorage.getItem('mantra-user-name');
+        const oldProgress = localStorage.getItem('mantra-progress');
         
-        // Show popup for first-time visitors who haven't skipped
-        if (!authSkipped && !hasSeenAuth) {
-          setShowAuthPopup(true);
-          localStorage.setItem('mantra-auth-intro', 'true');
+        if (oldUserName) {
+          // Migrate old user to new system
+          const progressData = oldProgress ? JSON.parse(oldProgress) : { totalPoints: 0, achievements: [], completedSessions: 0 };
+          
+          const migratedUser = {
+            name: oldUserName,
+            totalPoints: progressData.totalPoints || 0,
+            achievements: progressData.achievements || [],
+            completedSessions: progressData.completedSessions || 0
+          };
+          
+          // Save in new format and mark as logged in (but without password)
+          localStorage.setItem('mantra-user', JSON.stringify(migratedUser));
+          localStorage.setItem('mantra-auth-skipped', 'true'); // Mark as skipped since they're migrated
+          
+          setUserName(oldUserName);
+          setIsLoggedIn(false); // They can still use the app but won't have Supabase features
+          setUserProgress(progressData);
+          
+          // Clean up old keys
+          localStorage.removeItem('mantra-user-name');
+          localStorage.removeItem('mantra-progress');
+          localStorage.removeItem('mantra-name-skipped');
+          localStorage.removeItem('mantra-leaderboard-intro');
+        } else {
+          // Truly new user
+          const authSkipped = localStorage.getItem('mantra-auth-skipped');
+          const hasSeenAuth = localStorage.getItem('mantra-auth-intro');
+          
+          // Show popup for first-time visitors who haven't skipped
+          if (!authSkipped && !hasSeenAuth) {
+            setShowAuthPopup(true);
+            localStorage.setItem('mantra-auth-intro', 'true');
+          }
         }
       }
     };
