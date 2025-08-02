@@ -3,13 +3,14 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Trophy, Medal, Award, Crown, Users, TrendingUp } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { supabase } from '@/lib/supabase';
 
 interface LeaderboardEntry {
   name: string;
   points: number;
   sessions: number;
   achievements: string[];
-  lastActive: number;
+  lastActive: string;
 }
 
 interface LeaderboardProps {
@@ -28,39 +29,32 @@ export default function Leaderboard({
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const updateLeaderboard = () => {
-    const stored = JSON.parse(localStorage.getItem('mantra-leaderboard') || '[]');
-    
-    // If user has a name, update their entry
-    if (currentUserName) {
-      const existingIndex = stored.findIndex((entry: LeaderboardEntry) => 
-        entry.name.toLowerCase() === currentUserName.toLowerCase()
-      );
-      
-      const userEntry: LeaderboardEntry = {
-        name: currentUserName,
-        points: currentUserPoints,
-        sessions: currentUserSessions,
-        achievements: currentUserAchievements,
-        lastActive: Date.now()
-      };
-      
-      if (existingIndex >= 0) {
-        stored[existingIndex] = userEntry;
-      } else {
-        stored.push(userEntry);
+  const updateLeaderboard = async () => {
+    try {
+      // Fetch from Supabase
+      const { data, error } = await supabase
+        .from('users')
+        .select('name, total_points, completed_sessions, achievements, last_active')
+        .order('total_points', { ascending: false })
+        .order('completed_sessions', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching leaderboard:', error);
+        return;
       }
-      
-      localStorage.setItem('mantra-leaderboard', JSON.stringify(stored));
+
+      const leaderboardData: LeaderboardEntry[] = (data || []).map(user => ({
+        name: user.name,
+        points: user.total_points,
+        sessions: user.completed_sessions,
+        achievements: user.achievements || [],
+        lastActive: user.last_active
+      }));
+
+      setLeaderboard(leaderboardData);
+    } catch (error) {
+      console.error('Error updating leaderboard:', error);
     }
-    
-    // Sort by points (descending), then by sessions if points are equal
-    const sorted = stored.sort((a: LeaderboardEntry, b: LeaderboardEntry) => {
-      if (b.points !== a.points) return b.points - a.points;
-      return b.sessions - a.sessions;
-    });
-    
-    setLeaderboard(sorted);
   };
 
   useEffect(() => {

@@ -8,8 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Trophy, Award, Star, Languages, Volume2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import logoImage from '@/assets/logo.png';
-import NamePopup from './NamePopup';
+import AuthPopup from './AuthPopup';
 import Leaderboard from './Leaderboard';
+import { supabase } from '@/lib/supabase';
+import { LogOut, User } from 'lucide-react';
 
 // Mantra texts
 const MANTRAS = {
@@ -111,43 +113,68 @@ export default function MantraTrainer() {
   const [userProgress, setUserProgress] = useState<UserProgress>({ totalPoints: 0, achievements: [], completedSessions: 0 });
   const [isCompleted, setIsCompleted] = useState(false);
   const [suggestion, setSuggestion] = useState('');
-  const [showNamePopup, setShowNamePopup] = useState(false);
+  const [showAuthPopup, setShowAuthPopup] = useState(false);
   const [userName, setUserName] = useState<string>('');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
 
   // Check for first-time visit and load saved data
   useEffect(() => {
-    const saved = localStorage.getItem('mantra-progress');
-    if (saved) {
-      setUserProgress(JSON.parse(saved));
-    }
-    
-    // Check if user has a saved name
-    const savedName = localStorage.getItem('mantra-user-name');
-    if (savedName) {
-      setUserName(savedName);
-    }
-    
-    // Check if user has seen the new leaderboard feature
-    const hasSeenLeaderboard = localStorage.getItem('mantra-leaderboard-intro');
-    const nameSkipped = localStorage.getItem('mantra-name-skipped');
-    
-    // Show popup for users without a name AND who haven't seen the leaderboard intro yet
-    if (!savedName && !nameSkipped && !hasSeenLeaderboard) {
-      setShowNamePopup(true);
-      // Mark that they've seen the leaderboard feature
-      localStorage.setItem('mantra-leaderboard-intro', 'true');
-    }
-    
-    // Mark as visited
-    localStorage.setItem('mantra-visited', 'true');
+    const checkAuthStatus = () => {
+      const savedUser = localStorage.getItem('mantra-user');
+      if (savedUser) {
+        const userData = JSON.parse(savedUser);
+        setUserName(userData.name);
+        setIsLoggedIn(true);
+        setUserProgress({
+          totalPoints: userData.totalPoints || 0,
+          achievements: userData.achievements || [],
+          completedSessions: userData.completedSessions || 0
+        });
+      } else {
+        // Check if user has skipped auth before
+        const authSkipped = localStorage.getItem('mantra-auth-skipped');
+        const hasSeenAuth = localStorage.getItem('mantra-auth-intro');
+        
+        // Show popup for first-time visitors who haven't skipped
+        if (!authSkipped && !hasSeenAuth) {
+          setShowAuthPopup(true);
+          localStorage.setItem('mantra-auth-intro', 'true');
+        }
+      }
+    };
+
+    checkAuthStatus();
   }, []);
 
-  // Save progress to localStorage
+  // Save progress to Supabase and localStorage
   useEffect(() => {
-    localStorage.setItem('mantra-progress', JSON.stringify(userProgress));
-  }, [userProgress]);
+    if (isLoggedIn && userName) {
+      // Update Supabase
+      supabase
+        .from('users')
+        .update({
+          total_points: userProgress.totalPoints,
+          completed_sessions: userProgress.completedSessions,
+          achievements: userProgress.achievements,
+          last_active: new Date().toISOString()
+        })
+        .eq('name', userName)
+        .then(({ error }) => {
+          if (error) console.error('Error updating user progress:', error);
+        });
+
+      // Update localStorage
+      const userData = {
+        name: userName,
+        totalPoints: userProgress.totalPoints,
+        completedSessions: userProgress.completedSessions,
+        achievements: userProgress.achievements
+      };
+      localStorage.setItem('mantra-user', JSON.stringify(userData));
+    }
+  }, [userProgress, isLoggedIn, userName]);
 
   // Initialize suggestion on mount and language change
   useEffect(() => {
@@ -270,10 +297,32 @@ export default function MantraTrainer() {
     }
   };
 
-  const handleNameSubmit = (name: string) => {
-    setUserName(name);
-    localStorage.setItem('mantra-user-name', name);
-    setShowNamePopup(false);
+  const handleAuthSuccess = (userData: { name: string; totalPoints: number; completedSessions: number; achievements: string[] }) => {
+    setUserName(userData.name);
+    setIsLoggedIn(true);
+    setUserProgress({
+      totalPoints: userData.totalPoints,
+      completedSessions: userData.completedSessions,
+      achievements: userData.achievements
+    });
+    localStorage.setItem('mantra-user', JSON.stringify(userData));
+    setShowAuthPopup(false);
+  };
+
+  const handleLogout = () => {
+    setUserName('');
+    setIsLoggedIn(false);
+    setUserProgress({ totalPoints: 0, achievements: [], completedSessions: 0 });
+    localStorage.removeItem('mantra-user');
+    localStorage.removeItem('mantra-auth-skipped');
+    toast({
+      title: "Logged out",
+      description: "You have been logged out successfully",
+    });
+  };
+
+  const handleLogin = () => {
+    setShowAuthPopup(true);
   };
 
   const progressPercentage = Math.min((userProgress.totalPoints / 1000) * 100, 100);
@@ -296,9 +345,32 @@ export default function MantraTrainer() {
           />
         </div>
         
-        {/* Creator Info */}
-        <div className="fixed top-6 right-6 z-50">
-          <div className="text-sm bg-gradient-sacred bg-clip-text text-transparent font-mantra text-right">
+        {/* Auth Status */}
+        <div className="fixed top-6 right-6 z-50 flex flex-col items-end gap-2">
+          {isLoggedIn ? (
+            <div className="flex items-center gap-2 bg-card/80 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg">
+              <User className="w-4 h-4 text-primary" />
+              <span className="text-sm font-medium">{userName}</span>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={handleLogout}
+                className="h-6 w-6 p-0"
+              >
+                <LogOut className="w-3 h-3" />
+              </Button>
+            </div>
+          ) : (
+            <Button
+              size="sm"
+              onClick={handleLogin}
+              className="bg-primary/90 hover:bg-primary"
+            >
+              <User className="w-4 h-4 mr-1" />
+              Login
+            </Button>
+          )}
+          <div className="text-xs bg-gradient-sacred bg-clip-text text-transparent font-mantra text-right">
             <div>Creator - Kunj Thakur</div>
             <div>DOB - 21/05/2012</div>
             <div>Made in - 2025</div>
@@ -363,6 +435,18 @@ export default function MantraTrainer() {
             })}
           </div>
         </Card>
+
+        {/* Leaderboard */}
+        {isLoggedIn && (
+          <div className="mb-6">
+            <Leaderboard
+              currentUserName={userName}
+              currentUserPoints={userProgress.totalPoints}
+              currentUserSessions={userProgress.completedSessions}
+              currentUserAchievements={userProgress.achievements}
+            />
+          </div>
+        )}
 
         {/* Mantra Display */}
         <Card className="mb-6 p-6 bg-card/80 backdrop-blur-sm shadow-peaceful">
@@ -442,15 +526,6 @@ export default function MantraTrainer() {
           </Button>
         </div>
 
-        {/* Leaderboard */}
-        <div className="mt-8">
-          <Leaderboard
-            currentUserName={userName}
-            currentUserPoints={userProgress.totalPoints}
-            currentUserSessions={userProgress.completedSessions}
-            currentUserAchievements={userProgress.achievements}
-          />
-        </div>
 
         {/* Stats */}
         <Card className="mt-8 p-4 bg-card/60 backdrop-blur-sm">
@@ -470,11 +545,11 @@ export default function MantraTrainer() {
           </div>
         </Card>
 
-        {/* Name Popup */}
-        <NamePopup
-          isOpen={showNamePopup}
-          onClose={() => setShowNamePopup(false)}
-          onNameSubmit={handleNameSubmit}
+        {/* Auth Popup */}
+        <AuthPopup
+          isOpen={showAuthPopup}
+          onClose={() => setShowAuthPopup(false)}
+          onAuthSuccess={handleAuthSuccess}
         />
       </div>
     </div>
