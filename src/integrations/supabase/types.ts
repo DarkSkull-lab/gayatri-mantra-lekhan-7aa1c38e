@@ -14,7 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      users: {
+        Row: {
+          achievements: string[] | null
+          completed_sessions: number
+          created_at: string
+          id: string
+          last_active: string
+          name: string
+          password: string
+          total_points: number
+        }
+        Insert: {
+          achievements?: string[] | null
+          completed_sessions?: number
+          created_at?: string
+          id?: string
+          last_active?: string
+          name: string
+          password: string
+          total_points?: number
+        }
+        Update: {
+          achievements?: string[] | null
+          completed_sessions?: number
+          created_at?: string
+          id?: string
+          last_active?: string
+          name?: string
+          password?: string
+          total_points?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
