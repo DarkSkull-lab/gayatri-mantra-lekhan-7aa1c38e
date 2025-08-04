@@ -379,11 +379,11 @@ export default function MantraTrainer() {
     setUserName(userData.name);
     setIsLoggedIn(true);
     
-    // Merge local progress with database progress (keep the higher values)
+    // Always prioritize local progress over database progress to preserve user's work
     const mergedProgress = {
-      totalPoints: Math.max(userData.totalPoints || 0, userProgress.totalPoints || 0),
-      completedSessions: Math.max(userData.completedSessions || 0, userProgress.completedSessions || 0),
-      achievements: [...new Set([...(userData.achievements || []), ...(userProgress.achievements || [])])]
+      totalPoints: userProgress.totalPoints > 0 ? userProgress.totalPoints : (userData.totalPoints || 0),
+      completedSessions: userProgress.completedSessions > 0 ? userProgress.completedSessions : (userData.completedSessions || 0),
+      achievements: userProgress.achievements.length > 0 ? userProgress.achievements : (userData.achievements || [])
     };
     
     setUserProgress(mergedProgress);
@@ -393,7 +393,7 @@ export default function MantraTrainer() {
     }));
     setShowAuthPopup(false);
     
-    // Always update the database with merged progress to ensure consistency
+    // Update the database with the preserved local progress
     updateUserProgressInSupabase(mergedProgress);
   };
 
