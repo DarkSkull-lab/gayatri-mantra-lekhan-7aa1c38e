@@ -381,9 +381,9 @@ export default function MantraTrainer() {
     
     // Merge local progress with database progress (keep the higher values)
     const mergedProgress = {
-      totalPoints: Math.max(userData.totalPoints, userProgress.totalPoints),
-      completedSessions: Math.max(userData.completedSessions, userProgress.completedSessions),
-      achievements: [...new Set([...userData.achievements, ...userProgress.achievements])]
+      totalPoints: Math.max(userData.totalPoints || 0, userProgress.totalPoints || 0),
+      completedSessions: Math.max(userData.completedSessions || 0, userProgress.completedSessions || 0),
+      achievements: [...new Set([...(userData.achievements || []), ...(userProgress.achievements || [])])]
     };
     
     setUserProgress(mergedProgress);
@@ -393,12 +393,8 @@ export default function MantraTrainer() {
     }));
     setShowAuthPopup(false);
     
-    // If local progress was higher, update the database
-    if (mergedProgress.totalPoints > userData.totalPoints || 
-        mergedProgress.completedSessions > userData.completedSessions ||
-        mergedProgress.achievements.length > userData.achievements.length) {
-      updateUserProgressInSupabase(mergedProgress);
-    }
+    // Always update the database with merged progress to ensure consistency
+    updateUserProgressInSupabase(mergedProgress);
   };
 
   const handleLogout = () => {
