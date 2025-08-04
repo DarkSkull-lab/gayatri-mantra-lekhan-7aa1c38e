@@ -355,16 +355,50 @@ export default function MantraTrainer() {
     }
   };
 
+  const updateUserProgressInSupabase = async (progress: UserProgress) => {
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({
+          total_points: progress.totalPoints,
+          completed_sessions: progress.completedSessions,
+          achievements: progress.achievements,
+          last_active: new Date().toISOString()
+        })
+        .eq('name', userName);
+        
+      if (error) {
+        console.error('Error updating user progress:', error);
+      }
+    } catch (error) {
+      console.error('Error updating user progress:', error);
+    }
+  };
+
   const handleAuthSuccess = (userData: { name: string; totalPoints: number; completedSessions: number; achievements: string[] }) => {
     setUserName(userData.name);
     setIsLoggedIn(true);
-    setUserProgress({
-      totalPoints: userData.totalPoints,
-      completedSessions: userData.completedSessions,
-      achievements: userData.achievements
-    });
-    localStorage.setItem('mantra-user', JSON.stringify(userData));
+    
+    // Merge local progress with database progress (keep the higher values)
+    const mergedProgress = {
+      totalPoints: Math.max(userData.totalPoints, userProgress.totalPoints),
+      completedSessions: Math.max(userData.completedSessions, userProgress.completedSessions),
+      achievements: [...new Set([...userData.achievements, ...userProgress.achievements])]
+    };
+    
+    setUserProgress(mergedProgress);
+    localStorage.setItem('mantra-user', JSON.stringify({
+      name: userData.name,
+      ...mergedProgress
+    }));
     setShowAuthPopup(false);
+    
+    // If local progress was higher, update the database
+    if (mergedProgress.totalPoints > userData.totalPoints || 
+        mergedProgress.completedSessions > userData.completedSessions ||
+        mergedProgress.achievements.length > userData.achievements.length) {
+      updateUserProgressInSupabase(mergedProgress);
+    }
   };
 
   const handleLogout = () => {

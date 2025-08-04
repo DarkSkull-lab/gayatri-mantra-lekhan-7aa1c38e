@@ -175,7 +175,6 @@ export default function AuthPopup({ isOpen, onClose, onAuthSuccess }: AuthPopupP
   const resetForm = () => {
     setName('');
     setPassword('');
-    setIsLogin(false);
   };
 
   return (
