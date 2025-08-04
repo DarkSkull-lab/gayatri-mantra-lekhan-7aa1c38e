@@ -5,7 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Trophy, Award, Star, Languages, Volume2 } from 'lucide-react';
+import { Trophy, Award, Star, Languages, Volume2, Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import logoImage from '@/assets/logo.png';
 import AuthPopup from './AuthPopup';
@@ -440,6 +440,18 @@ export default function MantraTrainer() {
             <div className="flex items-center gap-2 bg-card/80 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg">
               <User className="w-4 h-4 text-primary" />
               <span className="text-sm font-medium">{userName}</span>
+              {/* Admin Panel Access - Only for Kunj thakur and Darkskull */}
+              {(userName === 'Kunj thakur' || userName === 'Darkskull') && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => window.open('/admin', '_blank')}
+                  className="h-6 w-6 p-0"
+                  title="Admin Panel"
+                >
+                  <Settings className="w-3 h-3" />
+                </Button>
+              )}
               <Button
                 size="sm"
                 variant="ghost"
