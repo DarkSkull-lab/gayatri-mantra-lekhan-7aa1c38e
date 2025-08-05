@@ -116,6 +116,8 @@ export default function MantraTrainer() {
   const [showAuthPopup, setShowAuthPopup] = useState(false);
   const [userName, setUserName] = useState<string>('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [customMessage, setCustomMessage] = useState<string>('');
+  const [globalSettings, setGlobalSettings] = useState<any>({});
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
 
@@ -194,7 +196,41 @@ export default function MantraTrainer() {
     };
 
     checkAuthStatus();
+    fetchUserCustomizations();
   }, []);
+
+  // Fetch user customizations and global settings
+  const fetchUserCustomizations = async () => {
+    try {
+      // Fetch user's custom message if logged in
+      if (isLoggedIn && userName) {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('custom_message')
+          .eq('name', userName)
+          .single();
+        
+        if (userData?.custom_message) {
+          setCustomMessage(userData.custom_message);
+        }
+      }
+
+      // Fetch global settings
+      const { data: globalData } = await supabase
+        .from('global_settings')
+        .select('*');
+      
+      if (globalData) {
+        const settingsObj: any = {};
+        globalData.forEach(setting => {
+          settingsObj[setting.setting_key] = setting.setting_value;
+        });
+        setGlobalSettings(settingsObj);
+      }
+    } catch (error) {
+      console.error('Error fetching customizations:', error);
+    }
+  };
 
   // Save progress to Supabase and localStorage
   useEffect(() => {
@@ -395,6 +431,9 @@ export default function MantraTrainer() {
     
     // Update the database with the preserved local progress
     updateUserProgressInSupabase(mergedProgress);
+    
+    // Refresh customizations
+    fetchUserCustomizations();
   };
 
   const handleLogout = () => {
@@ -418,6 +457,13 @@ export default function MantraTrainer() {
 
   return (
     <div className="min-h-screen bg-gradient-divine relative overflow-hidden">
+      {/* Global Announcement Banner */}
+      {globalSettings.site_banner && (
+        <div className="bg-primary text-primary-foreground py-2 px-4 text-center text-sm font-medium">
+          {typeof globalSettings.site_banner === 'string' ? globalSettings.site_banner : JSON.stringify(globalSettings.site_banner)}
+        </div>
+      )}
+      
       {/* Background Image */}
       <div 
         className="absolute inset-0 opacity-20 bg-cover bg-center"
@@ -478,6 +524,16 @@ export default function MantraTrainer() {
           </div>
         </div>
 
+
+        {/* Custom User Message */}
+        {customMessage && (
+          <div className="text-center mb-6">
+            <div className="bg-accent/20 border border-accent/30 rounded-lg p-4 inline-block">
+              <p className="text-accent-foreground font-medium">💌 Personal Message:</p>
+              <p className="text-lg mt-2">{customMessage}</p>
+            </div>
+          </div>
+        )}
 
         {/* Header */}
         <div className="text-center mb-8">

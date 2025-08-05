@@ -253,72 +253,72 @@ const Admin = () => {
           <Button
             variant="outline"
             onClick={() => navigate('/')}
-            className="text-white border-white/20 hover:bg-white/10"
+            className="text-black border-black/20 hover:bg-black/10 bg-white"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to App
           </Button>
-          <h1 className="text-3xl font-bold text-white">Admin Panel</h1>
+          <h1 className="text-3xl font-bold text-black">Admin Panel</h1>
         </div>
 
         <div className="grid gap-6">
-          <Card className="bg-white/10 border-white/20 text-white">
+          <Card className="bg-white/90 border-black/20 text-black">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-black">
                 <Users className="h-5 w-5" />
                 User Management & Customization
               </CardTitle>
-              <CardDescription className="text-white/70">
+              <CardDescription className="text-black/70">
                 Manage user data, custom messages, and individual features
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
                 {users.map((user) => (
-                  <div key={user.id} className="bg-white/5 rounded-lg p-6 border border-white/10">
+                  <div key={user.id} className="bg-black/10 rounded-lg p-6 border border-black/20">
                     <div className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                          <h3 className="font-semibold text-lg flex items-center gap-2">
+                          <h3 className="font-semibold text-lg flex items-center gap-2 text-black">
                             {user.name}
                             {user.is_featured && <Badge variant="secondary">Featured</Badge>}
                           </h3>
-                          <p className="text-sm text-white/70">
+                          <p className="text-sm text-black/70">
                             Created: {new Date(user.created_at).toLocaleDateString()}
                           </p>
-                          <p className="text-sm text-white/70">
+                          <p className="text-sm text-black/70">
                             Last Active: {new Date(user.last_active).toLocaleDateString()}
                           </p>
                         </div>
                         
                         <div className="grid grid-cols-2 gap-4">
                           <div className="flex items-center gap-2">
-                            <Award className="h-4 w-4" />
+                            <Award className="h-4 w-4 text-black" />
                             <Input
                               type="number"
                               value={editValues[user.id]?.points || '0'}
                               onChange={(e) => updateEditValue(user.id, 'points', e.target.value)}
-                              className="w-20 bg-white/10 border-white/20 text-white"
+                              className="w-20 bg-white border-black/20 text-black"
                               placeholder="Points"
                             />
-                            <span className="text-sm text-white/70">pts</span>
+                            <span className="text-sm text-black/70">pts</span>
                           </div>
                           
                           <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4" />
+                            <Clock className="h-4 w-4 text-black" />
                             <Input
                               type="number"
                               value={editValues[user.id]?.sessions || '0'}
                               onChange={(e) => updateEditValue(user.id, 'sessions', e.target.value)}
-                              className="w-20 bg-white/10 border-white/20 text-white"
+                              className="w-20 bg-white border-black/20 text-black"
                               placeholder="Sessions"
                             />
-                            <span className="text-sm text-white/70">sessions</span>
+                            <span className="text-sm text-black/70">sessions</span>
                           </div>
                         </div>
 
                         <div className="flex items-center gap-2">
-                          <label className="flex items-center gap-2 text-sm text-white/80">
+                          <label className="flex items-center gap-2 text-sm text-black">
                             <input
                               type="checkbox"
                               checked={editValues[user.id]?.featured || false}
@@ -331,24 +331,24 @@ const Admin = () => {
                       </div>
 
                       <div className="space-y-2">
-                        <label className="text-sm text-white/80">Custom Message for {user.name}:</label>
+                        <label className="text-sm text-black">Custom Message for {user.name}:</label>
                         <Input
                           value={editValues[user.id]?.message || ''}
                           onChange={(e) => updateEditValue(user.id, 'message', e.target.value)}
-                          className="bg-white/10 border-white/20 text-white"
+                          className="bg-white border-black/20 text-black"
                           placeholder="Enter custom message to display for this user..."
                         />
                       </div>
                       
                       <div className="flex flex-wrap gap-1">
-                        <span className="text-sm text-white/70">Achievements:</span>
+                        <span className="text-sm text-black/70">Achievements:</span>
                         {user.achievements.map((achievement, index) => (
                           <Badge key={index} variant="secondary" className="text-xs">
                             {achievement}
                           </Badge>
                         ))}
                         {user.achievements.length === 0 && (
-                          <span className="text-sm text-white/50">No achievements</span>
+                          <span className="text-sm text-black/50">No achievements</span>
                         )}
                       </div>
                       
@@ -369,10 +369,10 @@ const Admin = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-white/10 border-white/20 text-white">
+          <Card className="bg-white/90 border-black/20 text-black">
             <CardHeader>
-              <CardTitle>Global Website Settings</CardTitle>
-              <CardDescription className="text-white/70">
+              <CardTitle className="text-black">Global Website Settings</CardTitle>
+              <CardDescription className="text-black/70">
                 Control site-wide settings, colors, messages, and features for all users
               </CardDescription>
             </CardHeader>
@@ -382,13 +382,13 @@ const Admin = () => {
                   <Input
                     value={newGlobalSetting.key}
                     onChange={(e) => setNewGlobalSetting(prev => ({ ...prev, key: e.target.value }))}
-                    className="bg-white/10 border-white/20 text-white"
+                    className="bg-white border-black/20 text-black"
                     placeholder="Setting key (e.g., theme_color, banner_text)"
                   />
                   <Input
                     value={newGlobalSetting.value}
                     onChange={(e) => setNewGlobalSetting(prev => ({ ...prev, value: e.target.value }))}
-                    className="bg-white/10 border-white/20 text-white"
+                    className="bg-white border-black/20 text-black"
                     placeholder='Setting value (JSON: "red" or {"color": "blue"})'
                   />
                   <Button onClick={addGlobalSetting} className="bg-primary hover:bg-primary/80">
@@ -397,13 +397,13 @@ const Admin = () => {
                 </div>
 
                 <div className="space-y-4">
-                  <h4 className="text-lg font-semibold">Current Global Settings:</h4>
+                  <h4 className="text-lg font-semibold text-black">Current Global Settings:</h4>
                   {globalSettings.map((setting) => (
-                    <div key={setting.id} className="bg-white/5 rounded-lg p-4 border border-white/10">
+                    <div key={setting.id} className="bg-black/10 rounded-lg p-4 border border-black/20">
                       <div className="flex justify-between items-center">
                         <div>
-                          <h5 className="font-medium">{setting.setting_key}</h5>
-                          <p className="text-sm text-white/70">
+                          <h5 className="font-medium text-black">{setting.setting_key}</h5>
+                          <p className="text-sm text-black/70">
                             {JSON.stringify(setting.setting_value)}
                           </p>
                         </div>
@@ -418,32 +418,32 @@ const Admin = () => {
                     </div>
                   ))}
                   {globalSettings.length === 0 && (
-                    <p className="text-white/50">No global settings configured yet</p>
+                    <p className="text-black/50">No global settings configured yet</p>
                   )}
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/10 border-white/20 text-white">
+          <Card className="bg-white/90 border-black/20 text-black">
             <CardHeader>
-              <CardTitle>Admin Instructions</CardTitle>
+              <CardTitle className="text-black">Admin Instructions</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3 text-white/80">
-                <h4 className="font-semibold text-white">User Management:</h4>
+              <div className="space-y-3 text-black">
+                <h4 className="font-semibold text-black">User Management:</h4>
                 <p>• Restore points for users who lost progress during authentication</p>
                 <p>• Set custom messages that display for specific users</p>
                 <p>• Mark users as "Featured" to highlight them</p>
                 
-                <h4 className="font-semibold text-white mt-4">Global Settings Examples:</h4>
+                <h4 className="font-semibold text-black mt-4">Global Settings Examples:</h4>
                 <p>• <code>site_banner</code>: "Welcome to our spiritual platform!"</p>
                 <p>• <code>theme_color</code>: "#ff6b35"</p>
                 <p>• <code>maintenance_mode</code>: true</p>
                 <p>• <code>announcement</code>: {"{"}"text": "New features coming soon!", "color": "gold"{"}"}</p>
                 
-                <div className="bg-white/5 p-3 rounded mt-4">
-                  <p className="text-sm"><strong>Note:</strong> Changes save immediately to database and persist across reloads. All users will see global changes instantly.</p>
+                <div className="bg-black/5 p-3 rounded mt-4">
+                  <p className="text-sm text-black"><strong>Note:</strong> Changes save immediately to database and persist across reloads. All users will see global changes instantly.</p>
                 </div>
               </div>
             </CardContent>
