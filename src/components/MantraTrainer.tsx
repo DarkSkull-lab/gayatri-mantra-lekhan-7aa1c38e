@@ -5,13 +5,9 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Trophy, Award, Star, Languages, Volume2, Settings } from 'lucide-react';
+import { Trophy, Award, Star, Languages, Volume2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import logoImage from '@/assets/logo.png';
-import AuthPopup from './AuthPopup';
-import Leaderboard from './Leaderboard';
-import { supabase } from '@/integrations/supabase/client';
-import { LogOut, User } from 'lucide-react';
 
 // Mantra texts
 const MANTRAS = {
@@ -113,162 +109,21 @@ export default function MantraTrainer() {
   const [userProgress, setUserProgress] = useState<UserProgress>({ totalPoints: 0, achievements: [], completedSessions: 0 });
   const [isCompleted, setIsCompleted] = useState(false);
   const [suggestion, setSuggestion] = useState('');
-  const [showAuthPopup, setShowAuthPopup] = useState(false);
-  const [userName, setUserName] = useState<string>('');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [customMessage, setCustomMessage] = useState<string>('');
-  const [globalSettings, setGlobalSettings] = useState<any>({});
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
 
-  // Check for first-time visit and load saved data
+  // Load progress from localStorage
   useEffect(() => {
-    const checkAuthStatus = () => {
-      // First check for session persistence from Supabase login
-      const userSession = localStorage.getItem('mantra-user-session');
-      
-      if (userSession) {
-        // User has a Supabase session
-        const userData = JSON.parse(userSession);
-        setUserName(userData.name);
-        setIsLoggedIn(true);
-        setUserProgress({
-          totalPoints: userData.totalPoints || 0,
-          achievements: userData.achievements || [],
-          completedSessions: userData.completedSessions || 0
-        });
-        return;
-      }
-
-      const savedUser = localStorage.getItem('mantra-user');
-      
-      if (savedUser) {
-        // Local user (old format)
-        const userData = JSON.parse(savedUser);
-        setUserName(userData.name);
-        setIsLoggedIn(false); // Not logged into Supabase
-        setUserProgress({
-          totalPoints: userData.totalPoints || 0,
-          achievements: userData.achievements || [],
-          completedSessions: userData.completedSessions || 0
-        });
-      } else {
-        // Check for old system users and migrate them
-        const oldUserName = localStorage.getItem('mantra-user-name');
-        const oldProgress = localStorage.getItem('mantra-progress');
-        
-        if (oldUserName) {
-          // Migrate old user to new system
-          const progressData = oldProgress ? JSON.parse(oldProgress) : { totalPoints: 0, achievements: [], completedSessions: 0 };
-          
-          const migratedUser = {
-            name: oldUserName,
-            totalPoints: progressData.totalPoints || 0,
-            achievements: progressData.achievements || [],
-            completedSessions: progressData.completedSessions || 0
-          };
-          
-          // Save in new format and mark as logged in (but without password)
-          localStorage.setItem('mantra-user', JSON.stringify(migratedUser));
-          localStorage.setItem('mantra-auth-skipped', 'true'); // Mark as skipped since they're migrated
-          
-          setUserName(oldUserName);
-          setIsLoggedIn(false); // They can still use the app but won't have Supabase features
-          setUserProgress(progressData);
-          
-          // Clean up old keys
-          localStorage.removeItem('mantra-user-name');
-          localStorage.removeItem('mantra-progress');
-          localStorage.removeItem('mantra-name-skipped');
-          localStorage.removeItem('mantra-leaderboard-intro');
-        } else {
-          // Truly new user
-          const authSkipped = localStorage.getItem('mantra-auth-skipped');
-          const hasSeenAuth = localStorage.getItem('mantra-auth-intro');
-          
-          // Show popup for first-time visitors who haven't skipped
-          if (!authSkipped && !hasSeenAuth) {
-            setShowAuthPopup(true);
-            localStorage.setItem('mantra-auth-intro', 'true');
-          }
-        }
-      }
-    };
-
-    checkAuthStatus();
-    fetchUserCustomizations();
+    const saved = localStorage.getItem('mantra-progress');
+    if (saved) {
+      setUserProgress(JSON.parse(saved));
+    }
   }, []);
 
-  // Fetch user customizations and global settings
-  const fetchUserCustomizations = async () => {
-    try {
-      // Fetch user's custom message if logged in
-      if (isLoggedIn && userName) {
-        const { data: userData } = await supabase
-          .from('users')
-          .select('custom_message')
-          .eq('name', userName)
-          .single();
-        
-        if (userData?.custom_message) {
-          setCustomMessage(userData.custom_message);
-        }
-      }
-
-      // Fetch global settings
-      const { data: globalData } = await supabase
-        .from('global_settings')
-        .select('*');
-      
-      if (globalData) {
-        const settingsObj: any = {};
-        globalData.forEach(setting => {
-          settingsObj[setting.setting_key] = setting.setting_value;
-        });
-        setGlobalSettings(settingsObj);
-      }
-    } catch (error) {
-      console.error('Error fetching customizations:', error);
-    }
-  };
-
-  // Save progress to Supabase and localStorage
+  // Save progress to localStorage
   useEffect(() => {
-    if (isLoggedIn && userName) {
-      // Update Supabase
-      supabase
-        .from('users')
-        .update({
-          total_points: userProgress.totalPoints,
-          completed_sessions: userProgress.completedSessions,
-          achievements: userProgress.achievements,
-          last_active: new Date().toISOString()
-        })
-        .eq('name', userName)
-        .then(({ error }) => {
-          if (error) console.error('Error updating user progress:', error);
-        });
-
-      // Update session storage
-      const sessionData = {
-        id: '',
-        name: userName,
-        totalPoints: userProgress.totalPoints,
-        completedSessions: userProgress.completedSessions,
-        achievements: userProgress.achievements
-      };
-      localStorage.setItem('mantra-user-session', JSON.stringify(sessionData));
-    } else if (userName) {
-      // Update localStorage for non-logged-in users
-      const userData = {
-        name: userName,
-        totalPoints: userProgress.totalPoints,
-        completedSessions: userProgress.completedSessions,
-        achievements: userProgress.achievements
-      };
-      localStorage.setItem('mantra-user', JSON.stringify(userData));
-    }
-  }, [userProgress, isLoggedIn, userName]);
+    localStorage.setItem('mantra-progress', JSON.stringify(userProgress));
+  }, [userProgress]);
 
   // Initialize suggestion on mount and language change
   useEffect(() => {
@@ -391,79 +246,10 @@ export default function MantraTrainer() {
     }
   };
 
-  const updateUserProgressInSupabase = async (progress: UserProgress) => {
-    try {
-      const { error } = await supabase
-        .from('users')
-        .update({
-          total_points: progress.totalPoints,
-          completed_sessions: progress.completedSessions,
-          achievements: progress.achievements,
-          last_active: new Date().toISOString()
-        })
-        .eq('name', userName);
-        
-      if (error) {
-        console.error('Error updating user progress:', error);
-      }
-    } catch (error) {
-      console.error('Error updating user progress:', error);
-    }
-  };
-
-  const handleAuthSuccess = (userData: { name: string; totalPoints: number; completedSessions: number; achievements: string[] }) => {
-    setUserName(userData.name);
-    setIsLoggedIn(true);
-    
-    // Always prioritize local progress over database progress to preserve user's work
-    const mergedProgress = {
-      totalPoints: userProgress.totalPoints > 0 ? userProgress.totalPoints : (userData.totalPoints || 0),
-      completedSessions: userProgress.completedSessions > 0 ? userProgress.completedSessions : (userData.completedSessions || 0),
-      achievements: userProgress.achievements.length > 0 ? userProgress.achievements : (userData.achievements || [])
-    };
-    
-    setUserProgress(mergedProgress);
-    localStorage.setItem('mantra-user', JSON.stringify({
-      name: userData.name,
-      ...mergedProgress
-    }));
-    setShowAuthPopup(false);
-    
-    // Update the database with the preserved local progress
-    updateUserProgressInSupabase(mergedProgress);
-    
-    // Refresh customizations
-    fetchUserCustomizations();
-  };
-
-  const handleLogout = () => {
-    setUserName('');
-    setIsLoggedIn(false);
-    setUserProgress({ totalPoints: 0, achievements: [], completedSessions: 0 });
-    localStorage.removeItem('mantra-user');
-    localStorage.removeItem('mantra-user-session');
-    localStorage.removeItem('mantra-auth-skipped');
-    toast({
-      title: "Logged out",
-      description: "You have been logged out successfully",
-    });
-  };
-
-  const handleLogin = () => {
-    setShowAuthPopup(true);
-  };
-
   const progressPercentage = Math.min((userProgress.totalPoints / 1000) * 100, 100);
 
   return (
     <div className="min-h-screen bg-gradient-divine relative overflow-hidden">
-      {/* Global Announcement Banner */}
-      {globalSettings.site_banner && (
-        <div className="bg-primary text-primary-foreground py-2 px-4 text-center text-sm font-medium">
-          {typeof globalSettings.site_banner === 'string' ? globalSettings.site_banner : JSON.stringify(globalSettings.site_banner)}
-        </div>
-      )}
-      
       {/* Background Image */}
       <div 
         className="absolute inset-0 opacity-20 bg-cover bg-center"
@@ -480,60 +266,15 @@ export default function MantraTrainer() {
           />
         </div>
         
-        {/* Auth Status */}
-        <div className="fixed top-6 right-6 z-50 flex flex-col items-end gap-2">
-          {isLoggedIn ? (
-            <div className="flex items-center gap-2 bg-card/80 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg">
-              <User className="w-4 h-4 text-primary" />
-              <span className="text-sm font-medium">{userName}</span>
-              {/* Admin Panel Access - Only for Kunj thakur and Darkskull */}
-              {(userName === 'Kunj thakur' || userName === 'Darkskull') && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => window.open('/admin', '_blank')}
-                  className="h-6 w-6 p-0"
-                  title="Admin Panel"
-                >
-                  <Settings className="w-3 h-3" />
-                </Button>
-              )}
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={handleLogout}
-                className="h-6 w-6 p-0"
-              >
-                <LogOut className="w-3 h-3" />
-              </Button>
-            </div>
-          ) : (
-            <Button
-              size="sm"
-              onClick={handleLogin}
-              className="bg-primary/90 hover:bg-primary"
-            >
-              <User className="w-4 h-4 mr-1" />
-              Login
-            </Button>
-          )}
-          <div className="text-xs bg-gradient-sacred bg-clip-text text-transparent font-mantra text-right">
+        {/* Creator Info */}
+        <div className="fixed top-6 right-6 z-50">
+          <div className="text-sm bg-gradient-sacred bg-clip-text text-transparent font-mantra text-right">
             <div>Creator - Kunj Thakur</div>
             <div>DOB - 21/05/2012</div>
             <div>Made in - 2025</div>
           </div>
         </div>
 
-
-        {/* Custom User Message */}
-        {customMessage && (
-          <div className="text-center mb-6">
-            <div className="bg-accent/20 border border-accent/30 rounded-lg p-4 inline-block">
-              <p className="text-accent-foreground font-medium">💌 Personal Message:</p>
-              <p className="text-lg mt-2">{customMessage}</p>
-            </div>
-          </div>
-        )}
 
         {/* Header */}
         <div className="text-center mb-8">
@@ -592,7 +333,6 @@ export default function MantraTrainer() {
             })}
           </div>
         </Card>
-
 
         {/* Mantra Display */}
         <Card className="mb-6 p-6 bg-card/80 backdrop-blur-sm shadow-peaceful">
@@ -672,7 +412,6 @@ export default function MantraTrainer() {
           </Button>
         </div>
 
-
         {/* Stats */}
         <Card className="mt-8 p-4 bg-card/60 backdrop-blur-sm">
           <div className="text-center grid grid-cols-3 gap-4">
@@ -690,25 +429,6 @@ export default function MantraTrainer() {
             </div>
           </div>
         </Card>
-
-        {/* Leaderboard - Moved to bottom */}
-        {isLoggedIn && (
-          <div className="mt-8">
-            <Leaderboard
-              currentUserName={userName}
-              currentUserPoints={userProgress.totalPoints}
-              currentUserSessions={userProgress.completedSessions}
-              currentUserAchievements={userProgress.achievements}
-            />
-          </div>
-        )}
-
-        {/* Auth Popup */}
-        <AuthPopup
-          isOpen={showAuthPopup}
-          onClose={() => setShowAuthPopup(false)}
-          onAuthSuccess={handleAuthSuccess}
-        />
       </div>
     </div>
   );
