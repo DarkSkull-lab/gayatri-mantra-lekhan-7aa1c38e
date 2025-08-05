@@ -14,12 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      global_settings: {
+        Row: {
+          created_at: string
+          id: string
+          setting_key: string
+          setting_value: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          setting_key: string
+          setting_value: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          setting_key?: string
+          setting_value?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           achievements: string[] | null
           completed_sessions: number
           created_at: string
+          custom_message: string | null
+          custom_theme: Json | null
           id: string
+          is_featured: boolean | null
           last_active: string
           name: string
           password: string
@@ -29,7 +56,10 @@ export type Database = {
           achievements?: string[] | null
           completed_sessions?: number
           created_at?: string
+          custom_message?: string | null
+          custom_theme?: Json | null
           id?: string
+          is_featured?: boolean | null
           last_active?: string
           name: string
           password: string
@@ -39,7 +69,10 @@ export type Database = {
           achievements?: string[] | null
           completed_sessions?: number
           created_at?: string
+          custom_message?: string | null
+          custom_theme?: Json | null
           id?: string
+          is_featured?: boolean | null
           last_active?: string
           name?: string
           password?: string
