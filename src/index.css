@@ -10,13 +10,13 @@ All colors MUST be HSL.
   :root {
     /* Spiritual Color Palette - Saffron, Maroon, Cream, Gold */
     --background: 39 100% 97%;
-    --foreground: 15 25% 15%;
+    --foreground: 15 25% 10%;
 
     --card: 42 100% 98%;
-    --card-foreground: 15 25% 15%;
+    --card-foreground: 15 25% 10%;
 
     --popover: 42 100% 98%;
-    --popover-foreground: 15 25% 15%;
+    --popover-foreground: 15 25% 10%;
 
     --primary: 22 100% 50%;
     --primary-foreground: 42 100% 98%;
@@ -25,10 +25,10 @@ All colors MUST be HSL.
     --secondary-foreground: 42 100% 98%;
 
     --muted: 40 20% 90%;
-    --muted-foreground: 15 15% 40%;
+    --muted-foreground: 15 15% 25%;
 
     --accent: 45 100% 65%;
-    --accent-foreground: 15 25% 15%;
+    --accent-foreground: 15 25% 10%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 42 100% 98%;
