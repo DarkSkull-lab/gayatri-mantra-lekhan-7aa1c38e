@@ -112,12 +112,8 @@ export default function MantraTrainer() {
   const [suggestion, setSuggestion] = useState('');
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState([1]);
-  const [useTextToSpeech, setUseTextToSpeech] = useState(true);
-  const [customAudioFile, setCustomAudioFile] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
-  const speechRef = useRef<SpeechSynthesisUtterance | null>(null);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
 
   // Load progress from localStorage
@@ -256,38 +252,7 @@ export default function MantraTrainer() {
 
   // Audio player controls
   const toggleAudio = () => {
-    if (useTextToSpeech) {
-      toggleTextToSpeech();
-    } else {
-      toggleAudioFile();
-    }
-  };
-
-  const toggleTextToSpeech = () => {
-    if (isPlaying) {
-      // Stop current speech
-      speechSynthesis.cancel();
-      if (intervalRef.current) {
-        clearTimeout(intervalRef.current);
-        intervalRef.current = null;
-      }
-      setIsPlaying(false);
-    } else {
-      // Start text to speech loop
-      speakMantra();
-      setIsPlaying(true);
-    }
-  };
-
-  const toggleAudioFile = () => {
-    if (!audioRef.current || !customAudioFile) {
-      toast({
-        title: "No Audio File",
-        description: "Please upload an audio file first",
-        variant: "destructive"
-      });
-      return;
-    }
+    if (!audioRef.current) return;
     
     if (isPlaying) {
       audioRef.current.pause();
@@ -298,87 +263,15 @@ export default function MantraTrainer() {
     }
   };
 
-  const speakMantra = () => {
-    if (!speechSynthesis) {
-      toast({
-        title: "Not Supported",
-        description: "Text-to-speech is not supported in your browser",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    const utterance = new SpeechSynthesisUtterance(MANTRAS.hinglish);
-    utterance.rate = playbackSpeed[0];
-    utterance.pitch = 0.8;
-    utterance.volume = 1;
-    
-    // Try to find a suitable voice
-    const voices = speechSynthesis.getVoices();
-    const indianVoice = voices.find(voice => voice.lang.includes('hi') || voice.lang.includes('en-IN'));
-    if (indianVoice) {
-      utterance.voice = indianVoice;
-    }
-
-    utterance.onend = () => {
-      if (isPlaying) {
-        // Loop the mantra
-        intervalRef.current = setTimeout(() => {
-          if (isPlaying) {
-            speakMantra();
-          }
-        }, 500);
-      }
-    };
-
-    speechRef.current = utterance;
-    speechSynthesis.speak(utterance);
-  };
-
   const handleSpeedChange = (value: number[]) => {
     setPlaybackSpeed(value);
-    if (useTextToSpeech) {
-      // For text-to-speech, we need to restart if playing
-      if (isPlaying) {
-        speechSynthesis.cancel();
-        if (intervalRef.current) {
-          clearTimeout(intervalRef.current);
-        }
-        setTimeout(() => speakMantra(), 100);
-      }
-    } else if (audioRef.current) {
+    if (audioRef.current) {
       audioRef.current.playbackRate = value[0];
     }
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file && file.type.startsWith('audio/')) {
-      const url = URL.createObjectURL(file);
-      setCustomAudioFile(url);
-      setUseTextToSpeech(false);
-      toast({
-        title: "Audio File Loaded",
-        description: "Your custom mantra audio is ready to play",
-      });
-    } else {
-      toast({
-        title: "Invalid File",
-        description: "Please select a valid audio file",
-        variant: "destructive"
-      });
-    }
-  };
-
   const resetAudio = () => {
-    if (useTextToSpeech) {
-      speechSynthesis.cancel();
-      if (intervalRef.current) {
-        clearTimeout(intervalRef.current);
-        intervalRef.current = null;
-      }
-      setIsPlaying(false);
-    } else if (audioRef.current) {
+    if (audioRef.current) {
       audioRef.current.currentTime = 0;
     }
   };
@@ -558,56 +451,12 @@ export default function MantraTrainer() {
         {/* Audio Player */}
         <Card className="mb-6 p-6 bg-card/80 backdrop-blur-sm shadow-peaceful">
           <div className="text-center space-y-4">
-            <h3 className="text-lg font-semibold">Mantra Chant Player</h3>
-            
-            {/* Audio Source Selection */}
-            <div className="flex justify-center gap-4 mb-4">
-              <Button 
-                onClick={() => setUseTextToSpeech(true)}
-                variant={useTextToSpeech ? "default" : "outline"}
-                className={useTextToSpeech ? "bg-gradient-spiritual" : ""}
-              >
-                Text-to-Speech
-              </Button>
-              <Button 
-                onClick={() => setUseTextToSpeech(false)}
-                variant={!useTextToSpeech ? "default" : "outline"}
-                className={!useTextToSpeech ? "bg-gradient-spiritual" : ""}
-              >
-                Custom Audio
-              </Button>
-            </div>
-
-            {/* File Upload for Custom Audio */}
-            {!useTextToSpeech && (
-              <div className="mb-4">
-                <input
-                  type="file"
-                  accept="audio/*"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                  id="audio-upload"
-                />
-                <label
-                  htmlFor="audio-upload"
-                  className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80"
-                >
-                  <Volume2 className="w-4 h-4" />
-                  Upload Mantra Audio
-                </label>
-                {customAudioFile && (
-                  <p className="text-sm text-green-600 mt-2">✓ Audio file loaded</p>
-                )}
-              </div>
-            )}
+            <h3 className="text-lg font-semibold">Gayatri Mantra Chant</h3>
+            <p className="text-sm text-muted-foreground">Param Pujya Gurudev voice - Acharya Shriram Sharma</p>
             
             {/* Audio Controls */}
             <div className="flex justify-center gap-4">
-              <Button 
-                onClick={toggleAudio} 
-                className="bg-gradient-spiritual hover:opacity-90"
-                disabled={!useTextToSpeech && !customAudioFile}
-              >
+              <Button onClick={toggleAudio} className="bg-gradient-spiritual hover:opacity-90">
                 {isPlaying ? (
                   <>
                     <Pause className="w-4 h-4 mr-2" />
@@ -616,7 +465,7 @@ export default function MantraTrainer() {
                 ) : (
                   <>
                     <Play className="w-4 h-4 mr-2" />
-                    {useTextToSpeech ? "Play Chant (TTS)" : "Play Chant"}
+                    Play Chant
                   </>
                 )}
               </Button>
@@ -645,12 +494,6 @@ export default function MantraTrainer() {
                 <span>2x (Fast)</span>
               </div>
             </div>
-
-            {useTextToSpeech && (
-              <p className="text-sm text-muted-foreground">
-                Using browser text-to-speech for mantra chanting
-              </p>
-            )}
           </div>
         </Card>
 
@@ -661,18 +504,16 @@ export default function MantraTrainer() {
           </Button>
         </div>
 
-        {/* Hidden Audio Element */}
-        {customAudioFile && (
-          <audio
-            ref={audioRef}
-            src={customAudioFile}
-            preload="auto"
-            loop
-            onEnded={() => setIsPlaying(false)}
-            onPause={() => setIsPlaying(false)}
-            onPlay={() => setIsPlaying(true)}
-          />
-        )}
+        {/* Audio Element */}
+        <audio
+          ref={audioRef}
+          src="/Gayatri Mantra _ Param Pujya Gurudev voice 24 24000 Times Powerful _ Acharya Shriram Sharma.mp3"
+          preload="auto"
+          loop
+          onEnded={() => setIsPlaying(false)}
+          onPause={() => setIsPlaying(false)}
+          onPlay={() => setIsPlaying(true)}
+        />
 
         {/* Stats */}
         <Card className="mt-8 p-4 bg-card/60 backdrop-blur-sm">
