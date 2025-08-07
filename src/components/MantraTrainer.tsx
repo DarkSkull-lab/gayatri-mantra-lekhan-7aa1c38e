@@ -364,7 +364,7 @@ export default function MantraTrainer() {
                 onClick={handleSuggestionClick}
               >
                 <p className="text-sm text-muted-foreground mb-1">💡 Tap to use suggestion:</p>
-                <p className={`text-accent font-medium ${language === 'hindi' ? 'font-sanskrit' : 'font-mantra'}`}>
+                <p className={`text-foreground font-medium ${language === 'hindi' ? 'font-sanskrit' : 'font-mantra'}`}>
                   {suggestion}
                 </p>
               </div>
