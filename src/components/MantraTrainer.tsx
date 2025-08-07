@@ -5,7 +5,8 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Trophy, Award, Star, Languages, Volume2 } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
+import { Trophy, Award, Star, Languages, Volume2, Play, Pause, RotateCcw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import logoImage from '@/assets/logo.png';
 
@@ -109,7 +110,10 @@ export default function MantraTrainer() {
   const [userProgress, setUserProgress] = useState<UserProgress>({ totalPoints: 0, achievements: [], completedSessions: 0 });
   const [isCompleted, setIsCompleted] = useState(false);
   const [suggestion, setSuggestion] = useState('');
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [playbackSpeed, setPlaybackSpeed] = useState([1]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
   const { toast } = useToast();
 
   // Load progress from localStorage
@@ -245,6 +249,49 @@ export default function MantraTrainer() {
       textareaRef.current?.focus();
     }
   };
+
+  // Audio player controls
+  const toggleAudio = () => {
+    if (!audioRef.current) return;
+    
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      audioRef.current.play();
+      setIsPlaying(true);
+    }
+  };
+
+  const handleSpeedChange = (value: number[]) => {
+    setPlaybackSpeed(value);
+    if (audioRef.current) {
+      audioRef.current.playbackRate = value[0];
+    }
+  };
+
+  const resetAudio = () => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+    }
+  };
+
+  // Initialize audio when component mounts
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.loop = true;
+      audioRef.current.playbackRate = playbackSpeed[0];
+      audioRef.current.onended = () => setIsPlaying(false);
+      audioRef.current.onpause = () => setIsPlaying(false);
+      audioRef.current.onplay = () => setIsPlaying(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.playbackRate = playbackSpeed[0];
+    }
+  }, [playbackSpeed]);
 
   const progressPercentage = Math.min((userProgress.totalPoints / 1000) * 100, 100);
 
@@ -401,16 +448,67 @@ export default function MantraTrainer() {
           </div>
         </Card>
 
+        {/* Audio Player */}
+        <Card className="mb-6 p-6 bg-card/80 backdrop-blur-sm shadow-peaceful">
+          <div className="text-center space-y-4">
+            <h3 className="text-lg font-semibold">Mantra Chant Player</h3>
+            
+            {/* Audio Controls */}
+            <div className="flex justify-center gap-4">
+              <Button onClick={toggleAudio} className="bg-gradient-spiritual hover:opacity-90">
+                {isPlaying ? (
+                  <>
+                    <Pause className="w-4 h-4 mr-2" />
+                    Pause Chant
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-4 h-4 mr-2" />
+                    Play Chant
+                  </>
+                )}
+              </Button>
+              <Button onClick={resetAudio} variant="outline" className="border-accent">
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Reset
+              </Button>
+            </div>
+
+            {/* Speed Control */}
+            <div className="max-w-md mx-auto">
+              <label className="text-sm font-medium mb-2 block">
+                Playback Speed: {playbackSpeed[0]}x
+              </label>
+              <Slider
+                value={playbackSpeed}
+                onValueChange={handleSpeedChange}
+                min={0.5}
+                max={2}
+                step={0.1}
+                className="w-full"
+              />
+              <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                <span>0.5x (Slow)</span>
+                <span>1x (Normal)</span>
+                <span>2x (Fast)</span>
+              </div>
+            </div>
+          </div>
+        </Card>
+
         {/* Action Buttons */}
         <div className="flex justify-center gap-4">
           <Button onClick={resetSession} variant="outline" className="border-accent">
             Reset Session
           </Button>
-          <Button className="bg-gradient-spiritual hover:opacity-90">
-            <Volume2 className="w-4 h-4 mr-2" />
-            Play Chant (Coming Soon)
-          </Button>
         </div>
+
+        {/* Hidden Audio Element */}
+        <audio
+          ref={audioRef}
+          src="/gayatri-mantra.mp3"
+          preload="auto"
+        />
 
         {/* Stats */}
         <Card className="mt-8 p-4 bg-card/60 backdrop-blur-sm">
